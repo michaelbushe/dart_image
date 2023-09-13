@@ -39,7 +39,12 @@ Future<ExecuteResult> _getResult(_Params p) async {
 
 Future<ExecuteResult> executeCommandAsync(Command? command) async {
   final port = ReceivePort();
-  await Isolate.spawn(_getResult, _Params(port.sendPort, command));
+  await Isolate.spawn(_getResult, _Params(port.sendPort, command),
+      onError: RawReceivePort((Error error, StackTrace stackTrace) {
+        print('Error in image command isolate error: $error');
+        print(stackTrace.toString());
+      }).sendPort,
+      debugName: '${command.runtimeType}');
   final result = await port.first as ExecuteResult;
   // Don't throw instances of classes that don't extend either 'Exception' or
   // 'Error'.
